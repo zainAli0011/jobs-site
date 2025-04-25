@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 
@@ -16,7 +16,7 @@ interface Application {
   createdAt: string;
 }
 
-export default function AdminApplicationsPage() {
+function ApplicationsContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -258,142 +258,156 @@ export default function AdminApplicationsPage() {
             </div>
             
             {/* Applications Table */}
-            <div className="mt-6 flex flex-col">
-              <div className="-my-2 overflow-x-auto sm:-mx-6 lg:-mx-8">
-                <div className="py-2 align-middle inline-block min-w-full sm:px-6 lg:px-8">
-                  <div className="shadow overflow-hidden border-b border-gray-200 sm:rounded-lg">
-                    <table className="min-w-full divide-y divide-gray-200">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Candidate
-                          </th>
-                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Job
-                          </th>
-                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Status
-                          </th>
-                          <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                            Applied
-                          </th>
-                          <th scope="col" className="relative px-6 py-3">
-                            <span className="sr-only">Actions</span>
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {loading ? (
-                          <tr>
-                            <td colSpan={5} className="px-6 py-4 whitespace-nowrap text-center">
-                              <div className="flex justify-center items-center py-4">
-                                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-indigo-500"></div>
-                              </div>
-                            </td>
-                          </tr>
-                        ) : applications.length === 0 ? (
-                          <tr>
-                            <td colSpan={5} className="px-6 py-4 whitespace-nowrap text-center text-sm text-gray-500">
-                              No applications found
-                            </td>
-                          </tr>
-                        ) : (
-                          applications.map((application) => (
-                            <tr key={application.id}>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <div className="flex items-center">
-                                  <div>
-                                    <div className="text-sm font-medium text-gray-900">
-                                      {application.fullName}
-                                    </div>
-                                    <div className="text-sm text-gray-500">
-                                      {application.email}
-                                    </div>
-                                    <div className="text-sm text-gray-500">
-                                      {application.phone}
-                                    </div>
-                                  </div>
-                                </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
+            <div className="mt-6 bg-white shadow overflow-hidden sm:rounded-md">
+              {loading ? (
+                <div className="text-center py-12">
+                  <div className="spinner"></div>
+                  <p className="mt-2 text-sm text-gray-500">Loading applications...</p>
+                </div>
+              ) : applications.length === 0 ? (
+                <div className="text-center py-12">
+                  <p className="text-sm text-gray-500">No applications found.</p>
+                </div>
+              ) : (
+                <div className="overflow-x-auto">
+                  <table className="min-w-full divide-y divide-gray-200">
+                    <thead className="bg-gray-50">
+                      <tr>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          Applicant
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          Job
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          Applied
+                        </th>
+                        <th
+                          scope="col"
+                          className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider"
+                        >
+                          Status
+                        </th>
+                        <th scope="col" className="relative px-6 py-3">
+                          <span className="sr-only">Actions</span>
+                        </th>
+                      </tr>
+                    </thead>
+                    <tbody className="bg-white divide-y divide-gray-200">
+                      {applications.map((application) => (
+                        <tr key={application.id}>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="flex items-center">
+                              <div>
                                 <div className="text-sm font-medium text-gray-900">
-                                  {application.jobTitle}
+                                  {application.fullName}
                                 </div>
                                 <div className="text-sm text-gray-500">
-                                  {application.company}
+                                  {application.email}
                                 </div>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap">
-                                <select
-                                  value={application.status}
-                                  onChange={(e) => handleStatusChange(application.id, e.target.value)}
-                                  className="text-xs rounded-full border-0 py-1 pl-2 pr-6 focus:ring-indigo-500 focus:border-indigo-500"
-                                  style={{ backgroundPosition: 'right 0.25rem center' }}
-                                >
-                                  <option value="pending">Pending</option>
-                                  <option value="reviewing">Reviewing</option>
-                                  <option value="interviewed">Interviewed</option>
-                                  <option value="hired">Hired</option>
-                                  <option value="rejected">Rejected</option>
-                                </select>
-                                <span
-                                  className={`inline-block mt-1 px-2 py-1 text-xs leading-none rounded-full ${getStatusBadgeClass(application.status)}`}
-                                >
-                                  {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
-                                </span>
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {formatDate(application.createdAt)}
-                              </td>
-                              <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                                <Link
-                                  href={`/admin/applications/${application.id}`}
-                                  className="text-indigo-600 hover:text-indigo-900 mr-4"
-                                >
-                                  View
-                                </Link>
-                                <a 
-                                  href={`mailto:${application.email}`} 
-                                  className="text-blue-600 hover:text-blue-900"
-                                >
-                                  Contact
-                                </a>
-                              </td>
-                            </tr>
-                          ))
-                        )}
-                      </tbody>
-                    </table>
+                              </div>
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-900">{application.jobTitle}</div>
+                            <div className="text-sm text-gray-500">{application.company}</div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <div className="text-sm text-gray-500">
+                              {formatDate(application.createdAt)}
+                            </div>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap">
+                            <span
+                              className={`px-2 inline-flex text-xs leading-5 font-semibold rounded-full ${getStatusBadgeClass(
+                                application.status
+                              )}`}
+                            >
+                              {application.status.charAt(0).toUpperCase() + application.status.slice(1)}
+                            </span>
+                          </td>
+                          <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                            <Link
+                              href={`/admin/applications/${application.id}`}
+                              className="text-indigo-600 hover:text-indigo-900 mr-4"
+                            >
+                              View
+                            </Link>
+                            
+                            <select
+                              className="text-sm text-gray-500 border-gray-300 rounded-md"
+                              value={application.status}
+                              onChange={(e) => handleStatusChange(application.id, e.target.value)}
+                            >
+                              <option value="pending">Pending</option>
+                              <option value="reviewing">Reviewing</option>
+                              <option value="interviewed">Interviewed</option>
+                              <option value="hired">Hired</option>
+                              <option value="rejected">Rejected</option>
+                            </select>
+                          </td>
+                        </tr>
+                      ))}
+                    </tbody>
+                  </table>
+                </div>
+              )}
+              
+              {/* Pagination */}
+              {!loading && totalPages > 1 && (
+                <div className="px-4 py-3 bg-gray-50 border-t border-gray-200 sm:px-6">
+                  <div className="flex-1 flex justify-between items-center">
+                    <button
+                      onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
+                      disabled={currentPage === 1}
+                      className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
+                        currentPage === 1
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          : 'bg-white text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      Previous
+                    </button>
+                    <div className="hidden md:flex">
+                      <span className="relative inline-flex items-center px-4 py-2 text-sm font-medium text-gray-700">
+                        Page {currentPage} of {totalPages}
+                      </span>
+                    </div>
+                    <button
+                      onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
+                      disabled={currentPage === totalPages}
+                      className={`relative inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md ${
+                        currentPage === totalPages
+                          ? 'bg-gray-100 text-gray-400 cursor-not-allowed'
+                          : 'bg-white text-gray-700 hover:bg-gray-50'
+                      }`}
+                    >
+                      Next
+                    </button>
                   </div>
                 </div>
-              </div>
+              )}
             </div>
-            
-            {/* Pagination */}
-            {totalPages > 1 && (
-              <div className="mt-6 flex justify-between items-center">
-                <button
-                  onClick={() => setCurrentPage(Math.max(1, currentPage - 1))}
-                  disabled={currentPage === 1}
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Previous
-                </button>
-                <span className="text-sm text-gray-700">
-                  Page {currentPage} of {totalPages}
-                </span>
-                <button
-                  onClick={() => setCurrentPage(Math.min(totalPages, currentPage + 1))}
-                  disabled={currentPage === totalPages}
-                  className="inline-flex items-center px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
-                >
-                  Next
-                </button>
-              </div>
-            )}
           </div>
         </main>
       </div>
     </div>
+  );
+}
+
+export default function AdminApplicationsPage() {
+  return (
+    <Suspense fallback={<div className="text-center py-12">Loading...</div>}>
+      <ApplicationsContent />
+    </Suspense>
   );
 } 

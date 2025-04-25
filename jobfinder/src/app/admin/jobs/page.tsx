@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Link from 'next/link';
 import { useRouter, useSearchParams } from 'next/navigation';
 import Image from 'next/image';
@@ -25,7 +25,7 @@ interface Job {
   status: string;
 }
 
-export default function AdminJobsPage() {
+function AdminJobsContent() {
   console.log("Rendering AdminJobsPage component"); // Debug log
   
   const router = useRouter();
@@ -660,5 +660,13 @@ export default function AdminJobsPage() {
         </div>
       )}
     </div>
+  );
+}
+
+export default function AdminJobsPage() {
+  return (
+    <Suspense fallback={<div className="text-center py-12">Loading...</div>}>
+      <AdminJobsContent />
+    </Suspense>
   );
 } 
