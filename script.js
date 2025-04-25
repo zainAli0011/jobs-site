@@ -109,4 +109,220 @@ document.addEventListener('DOMContentLoaded', function() {
         // In a real application, we would use this ID to fetch the job details from a server
         // For this demo, the content is already in the HTML
     }
+
+    // Application Form Validation and Submission
+    const applicationForm = document.getElementById('applicationForm');
+    if (!applicationForm) return;
+
+    // Form validation
+    applicationForm.addEventListener('submit', function(e) {
+        e.preventDefault();
+        
+        let isValid = true;
+        const requiredFields = applicationForm.querySelectorAll('[required]');
+        
+        // Reset previous error states
+        applicationForm.querySelectorAll('.form-group').forEach(group => {
+            group.classList.remove('error');
+            const errorMessage = group.querySelector('.error-message');
+            if (errorMessage) errorMessage.remove();
+        });
+        
+        // Validate required fields
+        requiredFields.forEach(field => {
+            const formGroup = field.closest('.form-group');
+            
+            if (!field.value.trim()) {
+                isValid = false;
+                formGroup.classList.add('error');
+                
+                const errorMsg = document.createElement('div');
+                errorMsg.className = 'error-message';
+                errorMsg.textContent = 'This field is required';
+                formGroup.appendChild(errorMsg);
+            }
+            
+            // Email validation
+            if (field.type === 'email' && field.value.trim()) {
+                const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+                if (!emailRegex.test(field.value.trim())) {
+                    isValid = false;
+                    formGroup.classList.add('error');
+                    
+                    const errorMsg = document.createElement('div');
+                    errorMsg.className = 'error-message';
+                    errorMsg.textContent = 'Please enter a valid email address';
+                    formGroup.appendChild(errorMsg);
+                }
+            }
+            
+            // Phone validation
+            if (field.id === 'phone' && field.value.trim()) {
+                const phoneRegex = /^\+?[0-9\s\-\(\)]+$/;
+                if (!phoneRegex.test(field.value.trim())) {
+                    isValid = false;
+                    formGroup.classList.add('error');
+                    
+                    const errorMsg = document.createElement('div');
+                    errorMsg.className = 'error-message';
+                    errorMsg.textContent = 'Please enter a valid phone number';
+                    formGroup.appendChild(errorMsg);
+                }
+            }
+        });
+        
+        // Check consent checkbox
+        const consentCheckbox = document.getElementById('consent');
+        if (consentCheckbox && !consentCheckbox.checked) {
+            isValid = false;
+            const formGroup = consentCheckbox.closest('.form-group');
+            formGroup.classList.add('error');
+            
+            const errorMsg = document.createElement('div');
+            errorMsg.className = 'error-message';
+            errorMsg.textContent = 'You must agree to the terms before submitting';
+            formGroup.appendChild(errorMsg);
+        }
+        
+        // If valid, simulate form submission
+        if (isValid) {
+            const formData = new FormData(applicationForm);
+            submitApplication(formData);
+        } else {
+            // Scroll to first error
+            const firstError = applicationForm.querySelector('.form-group.error');
+            if (firstError) {
+                firstError.scrollIntoView({ behavior: 'smooth', block: 'center' });
+            }
+        }
+    });
+    
+    // Reset button functionality
+    const resetButton = applicationForm.querySelector('.reset-btn');
+    if (resetButton) {
+        resetButton.addEventListener('click', function(e) {
+            e.preventDefault();
+            applicationForm.reset();
+            
+            // Clear all error states
+            applicationForm.querySelectorAll('.form-group').forEach(group => {
+                group.classList.remove('error');
+                const errorMessage = group.querySelector('.error-message');
+                if (errorMessage) errorMessage.remove();
+            });
+        });
+    }
+    
+    // File input validation and preview
+    const resumeInput = document.getElementById('resume');
+    const resumeFileInfo = document.getElementById('resumeFileInfo');
+    
+    if (resumeInput && resumeFileInfo) {
+        resumeInput.addEventListener('change', function() {
+            const file = this.files[0];
+            if (file) {
+                const fileSizeMB = file.size / (1024 * 1024);
+                const allowedTypes = ['application/pdf', 'application/msword', 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'];
+                
+                if (fileSizeMB > 5) {
+                    resumeFileInfo.textContent = 'File is too large. Maximum size is 5MB.';
+                    resumeFileInfo.style.color = '#e74c3c';
+                    this.value = '';
+                } else if (!allowedTypes.includes(file.type)) {
+                    resumeFileInfo.textContent = 'Invalid file type. Please upload PDF or Word document.';
+                    resumeFileInfo.style.color = '#e74c3c';
+                    this.value = '';
+                } else {
+                    resumeFileInfo.textContent = `Selected file: ${file.name} (${Math.round(fileSizeMB * 100) / 100}MB)`;
+                    resumeFileInfo.style.color = '#4a89dc';
+                }
+            } else {
+                resumeFileInfo.textContent = '';
+            }
+        });
+    }
+    
+    // Show overlay ad on form submit button hover
+    const submitBtn = applicationForm.querySelector('.submit-application-btn');
+    if (submitBtn) {
+        submitBtn.addEventListener('mouseenter', function() {
+            // Delay ad showing to prevent accidental triggers
+            setTimeout(() => {
+                const adOverlay = document.getElementById('adOverlay');
+                if (adOverlay) adOverlay.style.display = 'flex';
+            }, 300);
+        });
+    }
+});
+
+// Function to simulate application submission
+function submitApplication(formData) {
+    // Get the form element
+    const applicationForm = document.getElementById('applicationForm');
+    if (!applicationForm) return;
+    
+    // Show loading state
+    applicationForm.classList.add('form-loading');
+    const loader = document.createElement('div');
+    loader.className = 'loader';
+    applicationForm.appendChild(loader);
+    
+    // Simulate API call with timeout
+    setTimeout(() => {
+        // Hide form and show success message
+        applicationForm.style.display = 'none';
+        const successMessage = document.querySelector('.success-message');
+        if (successMessage) {
+            successMessage.style.display = 'block';
+        } else {
+            // Create success message if it doesn't exist
+            const message = document.createElement('div');
+            message.className = 'success-message';
+            message.innerHTML = `
+                <i class="fas fa-check-circle"></i>
+                <h3>Application Submitted Successfully!</h3>
+                <p>Thank you for applying for the Senior Frontend Developer position at TechCorp Inc.</p>
+                <p>We have received your application and will review it shortly.</p>
+                <p>You will receive a confirmation email with further details.</p>
+                <a href="jobs.html" class="btn btn-primary mt-4">Back to Job Listings</a>
+            `;
+            
+            applicationForm.parentNode.appendChild(message);
+        }
+        
+        // Remove loading state
+        applicationForm.classList.remove('form-loading');
+        loader.remove();
+        
+        // Scroll to success message
+        const successElement = document.querySelector('.success-message');
+        if (successElement) {
+            successElement.scrollIntoView({ behavior: 'smooth', block: 'center' });
+        }
+        
+        // Log form data (in a real app, this would be sent to server)
+        console.log('Application submitted with the following data:');
+        for (const [key, value] of formData.entries()) {
+            console.log(`${key}: ${value}`);
+        }
+    }, 2000);
+}
+
+// Close ad overlay functionality
+document.addEventListener('DOMContentLoaded', function() {
+    const closeAdButton = document.getElementById('closeAdButton');
+    const adOverlay = document.getElementById('adOverlay');
+    
+    if (closeAdButton && adOverlay) {
+        closeAdButton.addEventListener('click', function() {
+            adOverlay.style.display = 'none';
+        });
+        
+        // Also close if clicked outside the ad content
+        adOverlay.addEventListener('click', function(e) {
+            if (e.target === adOverlay) {
+                adOverlay.style.display = 'none';
+            }
+        });
+    }
 }); 
