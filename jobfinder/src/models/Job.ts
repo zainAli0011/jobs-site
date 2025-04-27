@@ -1,7 +1,9 @@
 import mongoose, { Schema, Document } from 'mongoose';
+import { nanoid } from 'nanoid';
 
 // Define the Job document interface
 export interface IJob extends Document {
+  id?: string; // Optional ID field for backward compatibility
   title: string;
   company: string;
   companyLogo?: string;
@@ -31,6 +33,7 @@ export interface IJob extends Document {
 
 // Define the Job schema
 const JobSchema = new Schema<IJob>({
+  id: { type: String, unique: true }, // This is causing the duplicate key error
   title: { type: String, required: true },
   company: { type: String, required: true },
   companyLogo: { type: String },
@@ -56,6 +59,15 @@ const JobSchema = new Schema<IJob>({
   updatedAt: { type: Date, default: Date.now },
   applicants: { type: Number, default: 0 },
   views: { type: Number, default: 0 }
+});
+
+// Pre-save hook to ensure ID is set
+JobSchema.pre('save', function(next) {
+  // If id is not set, generate a unique one
+  if (!this.id) {
+    this.id = nanoid(10);
+  }
+  next();
 });
 
 // Create or use existing model

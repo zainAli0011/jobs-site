@@ -160,9 +160,6 @@ export default function NewJobPage() {
           <Link href="/admin/jobs" className="text-blue-600 hover:underline">
             Jobs
           </Link>
-          <Link href="/admin/companies" className="text-blue-600 hover:underline">
-            Companies
-          </Link>
         </div>
       </div>
 

@@ -7,6 +7,9 @@ import SortDropdown from '@/components/SortDropdown';
 import { connectToDatabase } from '@/lib/db';
 import Job from '@/models/Job';
 
+// Ensure the page is not cached
+export const revalidate = 0;
+
 export const metadata = {
   title: "Jobs | JobFinder",
   description: "Browse thousands of job listings and find your next career move with JobFinder."
@@ -15,9 +18,10 @@ export const metadata = {
 // Function to fetch jobs from database with filters
 async function getJobs(searchParams: Record<string, string>) {
   try {
+    console.log('Fetching jobs with filters:', searchParams);
     await connectToDatabase();
     
-    // Build query filter
+    // Build query filter - ALWAYS filter for active jobs
     const filter: any = { active: true };
     
     // Search query
@@ -113,6 +117,9 @@ async function getJobs(searchParams: Record<string, string>) {
       category: job.category,
       postedDate: job.postedDate || job.createdAt
     }));
+    
+    // Debug log
+    console.log(`Found ${totalJobs} active jobs matching filters`);
     
     return {
       jobs: formattedJobs,

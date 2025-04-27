@@ -18,8 +18,8 @@ export async function GET(
     // Connect to database
     await connectToDatabase();
 
-    const jobId = params.id;
-    
+    const {id} = await params;
+    const jobId = id;
     // Find job by ID
     const job = await Job.findById(jobId);
 

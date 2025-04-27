@@ -9,14 +9,15 @@ import Job from "@/models/Job";
 
 interface Job {
   _id: string;
+  id?: string;
   title: string;
   company: {
     name: string;
     logo: string;
-  };
+  } | string;
   location: string;
   type: string;
-  postedDate: string;
+  postedDate: string | Date;
   active: boolean;
   featured: boolean;
   applicants: number;
@@ -136,6 +137,8 @@ function AdminJobsContent() {
       
       // Fetch jobs from API
       console.log(`Making API request to: /api/admin/jobs?${params.toString()}`);
+      console.log('Filter values:', { searchTerm, filterActive, filterFeatured });
+      
       const response = await fetch(`/api/admin/jobs?${params.toString()}`, {
         credentials: 'include',
         cache: 'no-store',
@@ -200,6 +203,28 @@ function AdminJobsContent() {
   // Handle search
   const handleFilterSubmit = (e?: React.FormEvent) => {
     if (e) e.preventDefault();
+    
+    // Update searchTerm and filter values based on form inputs
+    setSearchTerm(searchQuery);
+    
+    // Update active status filter based on statusFilter dropdown
+    if (statusFilter === 'active') {
+      setFilterActive(true);
+    } else if (statusFilter === 'pending' || statusFilter === 'closed') {
+      setFilterActive(false);
+    } else {
+      setFilterActive(null);
+    }
+    
+    // Update featured filter based on featuredFilter dropdown
+    if (featuredFilter === 'featured') {
+      setFilterFeatured(true);
+    } else if (featuredFilter === 'not-featured') {
+      setFilterFeatured(false);
+    } else {
+      setFilterFeatured(null);
+    }
+    
     setCurrentPage(1);
     fetchJobs();
   };
@@ -278,7 +303,7 @@ function AdminJobsContent() {
           <h1 className="text-2xl font-bold text-gray-900">Manage Jobs</h1>
           <div className="flex flex-wrap gap-3">
             <Link
-              href="/admin/jobs/add"
+              href="/admin/jobs/new"
               className="inline-flex items-center px-4 py-2 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-600 hover:bg-blue-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
             >
               Add Job
@@ -457,32 +482,55 @@ function AdminJobsContent() {
                         <td className="px-6 py-4">
                           <div className="flex flex-col">
                             <div className="text-sm font-medium text-gray-900 truncate max-w-xs">{job.title}</div>
-                            <div className="text-sm text-gray-500 sm:hidden">{job.company?.name}</div>
+                            <div className="text-sm text-gray-500 sm:hidden">
+                              {typeof job.company === 'object' ? job.company?.name : job.company || 'N/A'}
+                            </div>
                             <div className="text-xs text-gray-500 sm:hidden">{job.location}</div>
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap hidden sm:table-cell">
-                          <div className="text-sm text-gray-900 truncate max-w-[150px]">{job.company?.name}</div>
+                          <div className="text-sm text-gray-900 truncate max-w-[150px]">
+                            {typeof job.company === 'object' ? job.company?.name : job.company || 'N/A'}
+                          </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap hidden md:table-cell">
                           <div className="text-sm text-gray-500 truncate max-w-[150px]">{job.location}</div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap hidden lg:table-cell">
                           <div className="text-sm text-gray-500">
-                            {job.createdAt ? new Date(job.createdAt).toLocaleDateString() : 'N/A'}
+                            {job.createdAt ? new Date(job.createdAt).toLocaleDateString('en-US', {
+                              year: 'numeric',
+                              month: 'short',
+                              day: 'numeric'
+                            }) : 
+                             job.postedDate ? (
+                               typeof job.postedDate === 'string' ? 
+                                 isNaN(Date.parse(job.postedDate)) ? 
+                                   job.postedDate : 
+                                   new Date(job.postedDate).toLocaleDateString('en-US', {
+                                     year: 'numeric',
+                                     month: 'short',
+                                     day: 'numeric'
+                                   }) : 
+                                 new Date(job.postedDate).toLocaleDateString('en-US', {
+                                   year: 'numeric',
+                                   month: 'short',
+                                   day: 'numeric'
+                                 })
+                             ) : 'N/A'}
                           </div>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap">
                           <span
                             className={`px-2.5 py-1 inline-flex text-xs leading-5 font-semibold rounded-full ${
-                              job.status === 'active'
+                              job.status === 'active' || job.active
                                 ? 'bg-green-100 text-green-800'
                                 : job.status === 'pending'
                                 ? 'bg-yellow-100 text-yellow-800'
                                 : 'bg-red-100 text-red-800'
                             }`}
                           >
-                            {job.status ? job.status.charAt(0).toUpperCase() + job.status.slice(1) : 'N/A'}
+                            {job.status ? job.status.charAt(0).toUpperCase() + job.status.slice(1) : job.active ? 'Active' : 'Inactive'}
                           </span>
                         </td>
                         <td className="px-6 py-4 whitespace-nowrap text-center">
@@ -508,14 +556,14 @@ function AdminJobsContent() {
                         <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                           <div className="flex justify-end space-x-2">
                             <Link
-                              href={`/admin/jobs/edit/${job._id?.toString() || job.id}`}
+                              href={`/admin/jobs/${job._id?.toString() || job.id}/edit`}
                               className="text-blue-600 hover:text-blue-800 px-2 py-1 rounded hover:bg-blue-50"
                             >
                               Edit
                             </Link>
                             <button
                               className="text-red-600 hover:text-red-800 px-2 py-1 rounded hover:bg-red-50"
-                              onClick={() => handleDeleteClick(job._id?.toString() || job.id)}
+                              onClick={() => handleDeleteClick(job._id?.toString() || job.id || '')}
                             >
                               Delete
                             </button>

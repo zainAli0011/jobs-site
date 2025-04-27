@@ -5,6 +5,9 @@ import { connectToDatabase } from '@/lib/db';
 import Job from '@/models/Job';
 import { Metadata } from "next";
 
+// Ensure the page is not cached
+export const revalidate = 0;
+
 interface JobDetailParams {
   params: {
     id: string;
@@ -16,7 +19,7 @@ export async function generateMetadata({ params }: JobDetailParams): Promise<Met
     await connectToDatabase();
     const job = await Job.findById(params.id).lean();
     
-    if (!job) {
+    if (!job || !job.active) {
       return {
         title: "Job Not Found | JobFinder",
         description: "The job listing you're looking for could not be found.",
@@ -39,7 +42,8 @@ export async function generateMetadata({ params }: JobDetailParams): Promise<Met
 async function getJobById(id: string) {
   try {
     await connectToDatabase();
-    return await Job.findById(id).lean();
+    // Only return the job if it exists and is active
+    return await Job.findOne({ _id: id, active: true }).lean();
   } catch (error) {
     console.error('Error fetching job:', error);
     return null;
@@ -49,9 +53,12 @@ async function getJobById(id: string) {
 export default async function JobDetailPage({ params }: JobDetailParams) {
   const job = await getJobById(params.id);
   
+  // If job doesn't exist or is not active, show 404
   if (!job) {
     return notFound();
   }
+  
+  console.log(`Job detail page loaded for job ID: ${params.id}, title: ${job.title}`);
   
   // Parse requirements and benefits if they're stored as strings
   const requirements = typeof job.requirements === 'string' 

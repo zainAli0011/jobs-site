@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { isAdmin } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/db';
 import Job from '@/models/Job';
+import { nanoid } from 'nanoid';
 
 // GET - Fetch all jobs (with pagination and filters)
 export async function GET(request: NextRequest) {
@@ -32,6 +33,7 @@ export async function GET(request: NextRequest) {
     if (search) {
       query.$or = [
         { title: { $regex: search, $options: 'i' } },
+        { "company.name": { $regex: search, $options: 'i' } },
         { company: { $regex: search, $options: 'i' } },
         { location: { $regex: search, $options: 'i' } }
       ];
@@ -93,7 +95,7 @@ export async function POST(request: NextRequest) {
     const data = await request.json();
     
     // Validate required fields
-    const requiredFields = ['title', 'company', 'location', 'type', 'salary', 'description'];
+    const requiredFields = ['title', 'company', 'location', 'type', 'description'];
     for (const field of requiredFields) {
       if (!data[field]) {
         return NextResponse.json(
@@ -103,12 +105,16 @@ export async function POST(request: NextRequest) {
       }
     }
 
-    // Set dates
+    // Set dates and generate unique ID
     const now = new Date();
     
-    // Create a new job document
+    // Create a new job document with generated ID if not provided
     const newJob = new Job({
       ...data,
+      id: data.id || nanoid(10), // Generate a unique ID if not provided
+      status: data.status || 'active',
+      active: data.active !== undefined ? data.active : true,
+      featured: data.featured || false,
       postedDate: now,
       updatedAt: now
     });

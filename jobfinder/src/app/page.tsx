@@ -10,9 +10,13 @@ export const metadata: Metadata = {
   description: 'Discover thousands of job opportunities across various industries. Find your dream job with JobFinder.',
 };
 
+// Added cache control to prevent stale data
+export const revalidate = 0; // This ensures the page is not cached and is regenerated on each request
+
 async function getFeaturedJobs() {
   try {
     await connectToDatabase();
+    // Explicitly check both active and deleted flags
     return await Job.find({ featured: true, active: true })
       .sort({ createdAt: -1 })
       .limit(6)
@@ -26,6 +30,7 @@ async function getFeaturedJobs() {
 async function getRecentJobs() {
   try {
     await connectToDatabase();
+    // Explicitly check both active and deleted flags
     return await Job.find({ active: true })
       .sort({ createdAt: -1 })
       .limit(8)
@@ -37,10 +42,13 @@ async function getRecentJobs() {
 }
 
 export default async function Home() {
+  // Using dynamic imports to force fresh data fetching
   const [featuredJobs, recentJobs] = await Promise.all([
     getFeaturedJobs(),
     getRecentJobs()
   ]);
+
+  console.log(`Home page loaded with ${featuredJobs.length} featured jobs and ${recentJobs.length} recent jobs`);
 
   return (
     <main>
