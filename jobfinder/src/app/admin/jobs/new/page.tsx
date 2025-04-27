@@ -98,7 +98,13 @@ export default function NewJobPage() {
 
       // Format the job data
       const jobData = {
-        ...formData,
+        title: formData.title,
+        company: formData.company,
+        location: formData.location,
+        isRemote: formData.isRemote,
+        type: formData.type,
+        category: formData.category,
+        experienceLevel: formData.experienceLevel,
         // Convert salary values to numbers if present
         salary: {
           min: formData.salaryMin ? parseInt(formData.salaryMin) : null,
@@ -106,6 +112,12 @@ export default function NewJobPage() {
           currency: formData.salaryCurrency,
           period: formData.salaryPeriod
         },
+        description: formData.description,
+        requirements: formData.requirements,
+        benefits: formData.benefits,
+        applicationInstructions: formData.applicationInstructions,
+        contactEmail: formData.contactEmail,
+        status: formData.status,
         // Add timestamps
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString()

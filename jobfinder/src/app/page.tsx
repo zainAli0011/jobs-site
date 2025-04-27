@@ -3,6 +3,8 @@ import Image from 'next/image';
 import { Metadata } from 'next';
 import { connectToDatabase } from '@/lib/db';
 import Job from '@/models/Job';
+import Company from '@/models/Company';
+import Application from '@/models/Application';
 import { JobCard } from '@/components/job-card';
 
 export const metadata: Metadata = {
@@ -41,11 +43,39 @@ async function getRecentJobs() {
   }
 }
 
+async function getJobStats() {
+  try {
+    await connectToDatabase();
+    const [totalJobs, companiesWithJobs, applications, remoteJobs] = await Promise.all([
+      Job.countDocuments({ active: true }),
+      Company.countDocuments({}),
+      Application.countDocuments({}),
+      Job.countDocuments({ active: true, workplace: "Remote" })
+    ]);
+    
+    return {
+      totalJobs,
+      companiesWithJobs,
+      applications,
+      remoteJobs
+    };
+  } catch (error) {
+    console.error('Error fetching job stats:', error);
+    return {
+      totalJobs: 0,
+      companiesWithJobs: 0,
+      applications: 0,
+      remoteJobs: 0
+    };
+  }
+}
+
 export default async function Home() {
   // Using dynamic imports to force fresh data fetching
-  const [featuredJobs, recentJobs] = await Promise.all([
+  const [featuredJobs, recentJobs, stats] = await Promise.all([
     getFeaturedJobs(),
-    getRecentJobs()
+    getRecentJobs(),
+    getJobStats()
   ]);
 
   console.log(`Home page loaded with ${featuredJobs.length} featured jobs and ${recentJobs.length} recent jobs`);
@@ -81,19 +111,19 @@ export default async function Home() {
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-300" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                <span>5,000+ Jobs Available</span>
+                <span>{stats.totalJobs} Active Jobs</span>
               </div>
               <div className="flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-300" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                <span>100+ Top Companies</span>
+                <span>{stats.applications} Applications Submitted</span>
               </div>
               <div className="flex items-center gap-2">
                 <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 text-indigo-300" viewBox="0 0 20 20" fill="currentColor">
                   <path fillRule="evenodd" d="M10 18a8 8 0 100-16 8 8 0 000 16zm3.707-9.293a1 1 0 00-1.414-1.414L9 10.586 7.707 9.293a1 1 0 00-1.414 1.414l2 2a1 1 0 001.414 0l4-4z" clipRule="evenodd" />
                 </svg>
-                <span>Remote & Onsite Options</span>
+                <span>{stats.remoteJobs} Remote Positions</span>
               </div>
             </div>
           </div>
@@ -105,20 +135,20 @@ export default async function Home() {
         <div className="container mx-auto px-4">
           <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
             <div className="text-center p-6">
-              <div className="text-3xl md:text-4xl font-bold text-indigo-600 mb-2">5000+</div>
+              <div className="text-3xl md:text-4xl font-bold text-indigo-600 mb-2">{stats.totalJobs}</div>
               <p className="text-gray-600">Active Jobs</p>
             </div>
             <div className="text-center p-6">
-              <div className="text-3xl md:text-4xl font-bold text-indigo-600 mb-2">750+</div>
+              <div className="text-3xl md:text-4xl font-bold text-indigo-600 mb-2">{stats.companiesWithJobs}</div>
               <p className="text-gray-600">Companies</p>
             </div>
             <div className="text-center p-6">
-              <div className="text-3xl md:text-4xl font-bold text-indigo-600 mb-2">12K+</div>
-              <p className="text-gray-600">Job Seekers</p>
+              <div className="text-3xl md:text-4xl font-bold text-indigo-600 mb-2">{stats.applications}</div>
+              <p className="text-gray-600">Applications</p>
             </div>
             <div className="text-center p-6">
-              <div className="text-3xl md:text-4xl font-bold text-indigo-600 mb-2">98%</div>
-              <p className="text-gray-600">Success Rate</p>
+              <div className="text-3xl md:text-4xl font-bold text-indigo-600 mb-2">{Math.round((stats.remoteJobs / stats.totalJobs) * 100) || 0}%</div>
+              <p className="text-gray-600">Remote Jobs</p>
             </div>
           </div>
         </div>

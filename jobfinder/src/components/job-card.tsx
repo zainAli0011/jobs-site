@@ -47,16 +47,33 @@ export function JobCard({ job, className }: JobCardProps) {
   const getPostedTime = (postedDate: Date | string) => {
     if (!postedDate) return "Recently";
     
-    const postDate = postedDate instanceof Date ? postedDate : new Date(postedDate);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - postDate.getTime());
-    const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
-    if (diffDays === 0) return "Today";
-    if (diffDays === 1) return "Yesterday";
-    if (diffDays < 7) return `${diffDays} days ago`;
-    if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) > 1 ? 's' : ''} ago`;
-    return `${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) > 1 ? 's' : ''} ago`;
+    try {
+      const postDate = postedDate instanceof Date ? postedDate : new Date(postedDate);
+      
+      // Check if date is valid
+      if (isNaN(postDate.getTime())) {
+        console.warn("Invalid date:", postedDate);
+        return "Recently";
+      }
+      
+      const now = new Date();
+      const diffTime = Math.abs(now.getTime() - postDate.getTime());
+      const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
+      const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
+      
+      // More precise time calculations
+      if (diffHours < 1) return "Just now";
+      if (diffHours < 24) return `${diffHours} hour${diffHours > 1 ? 's' : ''} ago`;
+      if (diffDays === 0) return "Today";
+      if (diffDays === 1) return "Yesterday";
+      if (diffDays < 7) return `${diffDays} days ago`;
+      if (diffDays < 30) return `${Math.floor(diffDays / 7)} week${Math.floor(diffDays / 7) > 1 ? 's' : ''} ago`;
+      if (diffDays < 365) return `${Math.floor(diffDays / 30)} month${Math.floor(diffDays / 30) > 1 ? 's' : ''} ago`;
+      return `${Math.floor(diffDays / 365)} year${Math.floor(diffDays / 365) > 1 ? 's' : ''} ago`;
+    } catch (error) {
+      console.error("Error calculating posted time:", error);
+      return "Recently";
+    }
   };
 
   return (

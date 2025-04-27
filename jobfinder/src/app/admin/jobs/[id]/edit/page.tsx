@@ -34,7 +34,16 @@ export default function EditJob() {
     const fetchJob = async () => {
       try {
         const response = await fetch(`/api/jobs/${jobId}`);
-        const data = await response.json();;
+        const data = await response.json();
+        console.log('Job data loaded:', data.job);
+        
+        // Normalize the experienceLevel/experience field
+        if (data.job.experienceLevel && !data.job.experience) {
+          data.job.experience = data.job.experienceLevel;
+        } else if (data.job.experience && !data.job.experienceLevel) {
+          data.job.experienceLevel = data.job.experience;
+        }
+        
         setFormData(data.job);
         setIsLoading(false);
       } catch (error) {
@@ -247,15 +256,19 @@ export default function EditJob() {
                       id="experience"
                       name="experience"
                       required
-                      value={formData.experience}
+                      value={formData.experience || formData.experienceLevel || ''}
                       onChange={handleChange}
                       className="w-full border border-gray-300 rounded-md px-3 py-2 focus:outline-none focus:ring-2 focus:ring-indigo-500"
                     >
                       <option value="">Select experience level</option>
-                      <option value="entry">Entry Level</option>
-                      <option value="mid">Mid Level</option>
+                      <option value="entry-level">Entry Level</option>
+                      <option value="mid-level">Mid Level</option>
                       <option value="senior">Senior Level</option>
                       <option value="executive">Executive Level</option>
+                      <option value="entry">Entry Level (Legacy)</option>
+                      <option value="mid">Mid Level (Legacy)</option>
+                      <option value="senior">Senior Level (Legacy)</option>
+                      <option value="executive">Executive Level (Legacy)</option>
                     </select>
                   </div>
                 </>
