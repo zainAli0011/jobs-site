@@ -1,0 +1,50 @@
+### Variables
+@baseUrl = http://localhost:3000/api
+@subscriberId = replace_with_actual_id
+
+### Get all subscribers (Admin only)
+GET {{baseUrl}}/subscribers
+Content-Type: application/json
+
+### Get subscribers with filtering and pagination
+GET {{baseUrl}}/subscribers?page=1&limit=10&search=example&active=true
+Content-Type: application/json
+
+### Create a new subscriber
+POST {{baseUrl}}/subscribers
+Content-Type: application/json
+
+{
+  "email": "test@example.com",
+  "phone": "1234567890"
+}
+
+### Get a specific subscriber by ID (Admin only)
+GET {{baseUrl}}/subscribers/{{subscriberId}}
+Content-Type: application/json
+
+### Update a subscriber (Admin only)
+PATCH {{baseUrl}}/subscribers/{{subscriberId}}
+Content-Type: application/json
+
+{
+  "email": "updated@example.com",
+  "phone": "9876543210",
+  "active": true
+}
+
+### Unsubscribe (can be done without admin)
+PATCH {{baseUrl}}/subscribers/{{subscriberId}}
+Content-Type: application/json
+
+{
+  "active": false
+}
+
+### Delete a subscriber (Admin only)
+DELETE {{baseUrl}}/subscribers/{{subscriberId}}
+Content-Type: application/json
+
+### Unsubscribe via URL link (for email links)
+GET {{baseUrl}}/subscribers/unsubscribe?email=test@example.com
+Content-Type: application/json 
