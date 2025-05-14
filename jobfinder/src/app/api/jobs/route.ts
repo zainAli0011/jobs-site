@@ -3,6 +3,7 @@ import { connectToDatabase } from '@/lib/db';
 import Job from '@/models/Job';
 import { getCurrentUser } from '@/lib/auth';
 import { nanoid } from 'nanoid';
+import { sendNotificationToAllUsers } from '@/lib/notifications';
 
 // GET: Fetch all jobs with optional filtering
 export async function GET(request: NextRequest) {
@@ -117,6 +118,12 @@ export async function POST(req: NextRequest) {
     
     // Create the job
     const job = await Job.create(jobData);
+    
+    // Send notification to all users
+    await sendNotificationToAllUsers(
+      'New Job Posted!', 
+      `${job.title} at ${job.company} is now available`
+    );
     
     // Return the created job
     return NextResponse.json({

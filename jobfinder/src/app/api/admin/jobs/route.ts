@@ -3,6 +3,7 @@ import { isAdmin } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/db';
 import Job from '@/models/Job';
 import { nanoid } from 'nanoid';
+import { sendNotificationToAllUsers } from '@/lib/notifications';
 
 // GET - Fetch all jobs (with pagination and filters)
 export async function GET(request: NextRequest) {
@@ -122,6 +123,12 @@ export async function POST(request: NextRequest) {
     // Save the job to the database
     await newJob.save();
     console.log('New job created:', newJob);
+    
+    // Send notification to all users
+    await sendNotificationToAllUsers(
+      'New Job Posted!', 
+      `${newJob.title} at ${newJob.company} is now available`
+    );
 
     // Return success response
     return NextResponse.json({
