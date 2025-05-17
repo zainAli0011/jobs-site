@@ -36,5 +36,4 @@ const PushTokenSchema = new Schema<IPushToken>({
   }
 });
 
-// Create or use existing model
 export default mongoose.models.PushToken || mongoose.model<IPushToken>('PushToken', PushTokenSchema); 
