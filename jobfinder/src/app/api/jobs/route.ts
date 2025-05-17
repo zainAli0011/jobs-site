@@ -3,7 +3,7 @@ import { connectToDatabase } from '@/lib/db';
 import Job from '@/models/Job';
 import { getCurrentUser } from '@/lib/auth';
 import { nanoid } from 'nanoid';
-import { sendNotificationToAllUsers } from '@/lib/notifications';
+import { sendPushNotifications } from '@/lib/notifications';
 
 // GET: Fetch all jobs with optional filtering
 export async function GET(request: NextRequest) {
@@ -119,11 +119,21 @@ export async function POST(req: NextRequest) {
     // Create the job
     const job = await Job.create(jobData);
     
-    // Send notification to all users
-    await sendNotificationToAllUsers(
-      'New Job Posted!', 
-      `${job.title} at ${job.company} is now available`
-    );
+    // Send push notification to all registered devices
+    try {
+      await sendPushNotifications({
+        title: `New Job: ${jobData.title}`,
+        body: `${jobData.company} is hiring for ${jobData.title} in ${jobData.location}`,
+        data: {
+          jobId: job.id,
+          type: 'new_job'
+        }
+      });
+      console.log('Push notifications sent for new job');
+    } catch (notificationError) {
+      // Log error but don't fail the job creation
+      console.error('Error sending push notifications:', notificationError);
+    }
     
     // Return the created job
     return NextResponse.json({
