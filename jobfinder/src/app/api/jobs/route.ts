@@ -3,7 +3,6 @@ import { connectToDatabase } from '@/lib/db';
 import Job from '@/models/Job';
 import { getCurrentUser } from '@/lib/auth';
 import { nanoid } from 'nanoid';
-import { sendPushNotifications } from '@/lib/notifications';
 
 // GET: Fetch all jobs with optional filtering
 export async function GET(request: NextRequest) {
@@ -89,7 +88,7 @@ export async function GET(request: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     // Check if user is authenticated and is an admin
-    const user = getCurrentUser(req);
+    const user = await getCurrentUser(req);
     if (!user || user.role !== 'admin') {
       return NextResponse.json(
         { success: false, message: 'Unauthorized' },
@@ -118,22 +117,6 @@ export async function POST(req: NextRequest) {
     
     // Create the job
     const job = await Job.create(jobData);
-    
-    // Send push notification to all registered devices
-    try {
-      await sendPushNotifications({
-        title: `New Job: ${jobData.title}`,
-        body: `${jobData.company} is hiring for ${jobData.title} in ${jobData.location}`,
-        data: {
-          jobId: job.id,
-          type: 'new_job'
-        }
-      });
-      console.log('Push notifications sent for new job');
-    } catch (notificationError) {
-      // Log error but don't fail the job creation
-      console.error('Error sending push notifications:', notificationError);
-    }
     
     // Return the created job
     return NextResponse.json({

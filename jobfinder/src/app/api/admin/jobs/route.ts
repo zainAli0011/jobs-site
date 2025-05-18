@@ -3,12 +3,13 @@ import { isAdmin } from '@/lib/auth';
 import { connectToDatabase } from '@/lib/db';
 import Job from '@/models/Job';
 import { nanoid } from 'nanoid';
+import { sendPushNotifications } from '@/lib/notifications';
 
 // GET - Fetch all jobs (with pagination and filters)
 export async function GET(request: NextRequest) {
   try {
     // Check if user is authenticated as admin
-    if (!await isAdmin()) {
+    if (!await isAdmin(request)) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -81,7 +82,7 @@ export async function GET(request: NextRequest) {
 export async function POST(request: NextRequest) {
   try {
     // Check if user is authenticated as admin
-    if (!await isAdmin()) {
+    if (!await isAdmin(request)) {
       return NextResponse.json(
         { error: 'Unauthorized' },
         { status: 401 }
@@ -121,7 +122,60 @@ export async function POST(request: NextRequest) {
 
     // Save the job to the database
     await newJob.save();
-    console.log('New job created:', newJob);
+    console.log('🟢 [ADMIN JOBS] New job created:', {
+      id: newJob.id,
+      title: newJob.title,
+      company: newJob.company
+    });
+    
+    // Send push notification to all registered devices
+    console.log('🔔 [ADMIN JOBS] Starting notification process for new job:', newJob.title);
+    try {
+      console.log('📝 [ADMIN JOBS] Preparing notification data for job:', { 
+        id: newJob.id, 
+        title: newJob.title 
+      });
+      
+      const notificationTitle = `New Job: ${data.title}`;
+      const notificationBody = `${data.company} is hiring for ${data.title} in ${data.location}`;
+      
+      console.log('📤 [ADMIN JOBS] Sending notification with:', { 
+        title: notificationTitle, 
+        body: notificationBody 
+      });
+      
+      const notificationStart = Date.now();
+      const notificationResult = await sendPushNotifications({
+        title: notificationTitle,
+        body: notificationBody,
+        data: {
+          jobId: newJob.id,
+          type: 'new_job',
+          companyName: data.company,
+          jobTitle: data.title,
+          screen: 'jobApply',
+          location: data.location
+        }
+      });
+      const notificationEnd = Date.now();
+      
+      console.log(`⏱️ [ADMIN JOBS] Total notification process took ${notificationEnd - notificationStart}ms`);
+      console.log('✅ [ADMIN JOBS] Push notification result:', {
+        success: notificationResult.success,
+        sentCount: notificationResult.sent,
+        message: notificationResult.message
+      });
+    } catch (notificationError) {
+      // Log error but don't fail the job creation
+      console.error('❌ [ADMIN JOBS] Error sending push notifications:', notificationError);
+      if (notificationError instanceof Error) {
+        console.error('❌ [ADMIN JOBS] Error details:', {
+          name: notificationError.name,
+          message: notificationError.message,
+          stack: notificationError.stack
+        });
+      }
+    }
 
     // Return success response
     return NextResponse.json({
