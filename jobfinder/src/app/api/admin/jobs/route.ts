@@ -145,11 +145,12 @@ export async function POST(request: NextRequest) {
       });
       
       const notificationStart = Date.now();
+      console.log('🔍 [ADMIN JOBS] MongoDB _id:', newJob._id.toString(), 'Custom id:', newJob.id);
       const notificationResult = await sendPushNotifications({
         title: notificationTitle,
         body: notificationBody,
         data: {
-          jobId: newJob.id,
+          jobId: newJob._id.toString(),  // Using MongoDB _id instead of custom id
           type: 'new_job',
           companyName: data.company,
           jobTitle: data.title,
