@@ -21,8 +21,8 @@ export async function GET(request: NextRequest) {
 
     // Get query parameters
     const searchParams = request.nextUrl.searchParams;
-    const page = parseInt(searchParams.get('page') || '1');
-    const limit = parseInt(searchParams.get('limit') || '10');
+    const page = searchParams.get('page');
+    const limit = searchParams.get('limit');
     const search = searchParams.get('search') || '';
     const active = searchParams.get('active');
     const featured = searchParams.get('featured');
@@ -50,25 +50,45 @@ export async function GET(request: NextRequest) {
 
     // Count total matching documents for pagination
     const totalJobs = await Job.countDocuments(query);
-    const totalPages = Math.ceil(totalJobs / limit);
-
-    // Get jobs with pagination
-    const jobs = await Job.find(query)
-      .sort({ postedDate: -1 }) // Sort by most recent first
-      .skip((page - 1) * limit)
-      .limit(limit);
-
-    // Return paginated results
-    return NextResponse.json({
-      jobs,
-      pagination: {
-        currentPage: page,
-        totalPages,
-        totalJobs,
-        hasNext: page < totalPages,
-        hasPrev: page > 1
-      }
-    });
+    
+    // Initialize query builder
+    let jobsQuery = Job.find(query).sort({ postedDate: -1 }); // Sort by most recent first
+    
+    // Apply pagination only if both page and limit are provided
+    if (page && limit) {
+      const pageNum = parseInt(page);
+      const limitNum = parseInt(limit);
+      const totalPages = Math.ceil(totalJobs / limitNum);
+      
+      // Apply pagination
+      jobsQuery = jobsQuery
+        .skip((pageNum - 1) * limitNum)
+        .limit(limitNum);
+      
+      // Get jobs with pagination
+      const jobs = await jobsQuery;
+      
+      // Return paginated results
+      return NextResponse.json({
+        jobs,
+        pagination: {
+          currentPage: pageNum,
+          totalPages,
+          totalJobs,
+          hasNext: pageNum < totalPages,
+          hasPrev: pageNum > 1
+        }
+      });
+    } else {
+      // Get all jobs without pagination
+      const jobs = await jobsQuery;
+      
+      // Return all results without pagination info
+      return NextResponse.json({
+        jobs,
+        totalJobs
+      });
+    }
   } catch (error) {
     console.error('Error fetching jobs:', error);
     return NextResponse.json(
