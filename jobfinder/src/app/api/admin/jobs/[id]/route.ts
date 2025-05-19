@@ -20,7 +20,7 @@ export async function GET(
     // Connect to database
     await connectToDatabase();
 
-    const jobId = params.id;
+    const jobId = await params.id;
     
     // Find job by ID
     const job = await Job.findById(jobId);
@@ -59,7 +59,7 @@ export async function PATCH(
     // Connect to database
     await connectToDatabase();
 
-    const jobId = params.id;
+    const jobId = await params.id;
     
     // Find job by ID
     const job = await Job.findById(jobId);
@@ -115,7 +115,7 @@ export async function DELETE(
     // Connect to database
     await connectToDatabase();
 
-    const jobId = params.id;
+    const jobId = await params.id;
     
     // Find job by ID and delete it
     const job = await Job.findByIdAndDelete(jobId);

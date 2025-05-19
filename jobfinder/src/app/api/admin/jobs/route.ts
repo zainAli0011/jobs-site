@@ -83,10 +83,16 @@ export async function GET(request: NextRequest) {
       // Get all jobs without pagination
       const jobs = await jobsQuery;
       
-      // Return all results without pagination info
+      // Return all results with pagination info (all items on page 1)
       return NextResponse.json({
         jobs,
-        totalJobs
+        pagination: {
+          currentPage: 1,
+          totalPages: 1,
+          totalJobs,
+          hasNext: false,
+          hasPrev: false
+        }
       });
     }
   } catch (error) {
